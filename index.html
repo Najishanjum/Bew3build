@@ -1,927 +1,264 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bew3 — Web3 Identity Platform</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-deep: #000000;
-      --bg-indigo: #0a0a1a;
-      --glow-purple: #b254ff;
-      --glow-cyan: #37e6ff;
-      --glow-blue: #4d9fff;
-      --glow-magenta: #ff3fb4;
-      --glass: rgba(255, 255, 255, 0.03);
-      --glass-strong: rgba(255, 255, 255, 0.08);
-      --text-strong: #ffffff;
-      --text-soft: #a0b8d8;
-      --card-width: min(32vw, 560px);
-      --card-ratio: 1.5;
-      color-scheme: dark;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: 100%;
-      height: 100%;
-      background: var(--bg-deep);
-      color: var(--text-strong);
-      font-family: 'Rajdhani', 'Orbitron', system-ui, sans-serif;
-      overflow-x: hidden;
-      overflow-y: auto;
-      position: relative;
-    }
-    /* Global cyberpunk background layers */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      background: 
-        radial-gradient(ellipse 120% 100% at 20% 20%, rgba(178,84,255,0.3) 0%, transparent 50%),
-        radial-gradient(ellipse 100% 120% at 80% 10%, rgba(55,230,255,0.25) 0%, transparent 50%),
-        radial-gradient(ellipse 110% 100% at 50% 90%, rgba(255,63,180,0.2) 0%, transparent 55%),
-        radial-gradient(ellipse 90% 110% at 70% 60%, rgba(77,159,255,0.18) 0%, transparent 50%),
-        linear-gradient(180deg, rgba(10,10,26,0.98) 0%, rgba(0,0,0,0.99) 100%);
-      filter: saturate(1.2) blur(0.5px);
-    }
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      background: 
-        repeating-linear-gradient(
-          0deg,
-          rgba(255,255,255,0.02) 0px,
-          transparent 1px,
-          transparent 2px
-        ),
-        radial-gradient(ellipse 150% 120% at 50% 100%, rgba(122,215,255,0.1), transparent 70%);
-      mix-blend-mode: screen;
-      opacity: 0.6;
-    }
-    canvas#bg {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
-    }
-    main {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4vw;
-      padding: 6vh 8vw;
-      align-items: start;
-      padding-top: 8vh;
-    }
-    @media (max-width: 1200px) {
-      main { grid-template-columns: 1fr; padding: 6vh 6vw; gap: 4vh; }
-    }
-    .panel {
-      position: relative;
-      background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
-      border: 1px solid rgba(122,215,255,0.15);
-      box-shadow: 
-        0 30px 80px rgba(0,0,0,0.6),
-        0 0 40px rgba(178,84,255,0.2),
-        inset 0 0 0 1px rgba(255,255,255,0.04);
-      border-radius: 28px;
-      padding: 2.5rem;
-      backdrop-filter: blur(20px) saturate(1.3);
-      overflow: hidden;
-    }
-    .panel::before {
-      content: "";
-      position: absolute;
-      inset: -50%;
-      background: conic-gradient(
-        from 120deg,
-        rgba(55,230,255,0.1),
-        rgba(178,84,255,0.15),
-        rgba(255,63,180,0.1),
-        rgba(77,159,255,0.12),
-        rgba(55,230,255,0.1)
-      );
-      filter: blur(80px);
-      z-index: 0;
-      animation: spin 35s linear infinite;
-      opacity: 0.5;
-    }
-    .panel::after {
-      content: "";
-      position: absolute;
-      inset: -50%;
-      background: conic-gradient(
-        from 300deg,
-        rgba(178,84,255,0.12),
-        rgba(55,230,255,0.1),
-        rgba(77,159,255,0.1),
-        rgba(255,63,180,0.12),
-        rgba(178,84,255,0.12)
-      );
-      filter: blur(80px);
-      z-index: 0;
-      animation: spin 45s linear infinite reverse;
-      opacity: 0.4;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .panel-content {
-      position: relative;
-      z-index: 1;
-    }
-    h1 {
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 700;
-      font-size: clamp(2rem, 3vw, 3rem);
-      letter-spacing: 0.1em;
-      margin: 0 0 0.6rem;
-      text-transform: uppercase;
-      background: linear-gradient(135deg, #ffffff, #b254ff, #37e6ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-shadow: 0 0 30px rgba(178,84,255,0.6);
-      filter: drop-shadow(0 0 20px rgba(55,230,255,0.4));
-    }
-    p.sub {
-      margin: 0 0 2rem;
-      color: var(--text-soft);
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.1rem;
-      letter-spacing: 0.05em;
-      font-weight: 400;
-    }
-    form {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1.2rem;
-    }
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-    }
-    label {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.85rem;
-      letter-spacing: 0.08em;
-      color: var(--text-soft);
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-    input, select, .chipset {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(122,215,255,0.2);
-      color: var(--text-strong);
-      padding: 1rem 1.2rem;
-      border-radius: 16px;
-      outline: none;
-      font-size: 1rem;
-      font-family: 'Rajdhani', sans-serif;
-      font-weight: 500;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 
-        inset 0 0 0 1px rgba(255,255,255,0.03),
-        0 12px 40px rgba(0,0,0,0.4);
-    }
-    input:hover, select:hover {
-      border-color: rgba(178,84,255,0.5);
-      box-shadow: 
-        0 0 20px rgba(178,84,255,0.3),
-        inset 0 0 0 1px rgba(255,255,255,0.05);
-      transform: translateY(-2px);
-    }
-    input:focus, select:focus {
-      border-color: var(--glow-cyan);
-      box-shadow: 
-        0 0 25px rgba(55,230,255,0.5),
-        inset 0 0 0 1px rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.05);
-    }
-    input[type="file"] {
-      padding: 0.8rem 1.2rem;
-      cursor: pointer;
-    }
-    .chipset {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 0.7rem;
-      padding: 0.8rem;
-    }
-    .chip {
-      border: 1px solid rgba(178,84,255,0.3);
-      padding: 0.7rem 0.9rem;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.6rem;
-      cursor: pointer;
-      background: rgba(255,255,255,0.02);
-      transition: all 0.2s ease;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
-      font-family: 'Rajdhani', sans-serif;
-      font-weight: 500;
-      font-size: 0.9rem;
-      letter-spacing: 0.04em;
-    }
-    .chip input { display: none; }
-    .chip span {
-      color: var(--text-soft);
-      user-select: none;
-    }
-    .chip.active {
-      border-color: rgba(55,230,255,0.7);
-      box-shadow: 
-        0 0 22px rgba(55,230,255,0.4),
-        inset 0 0 0 1px rgba(255,255,255,0.08);
-      background: linear-gradient(145deg, rgba(55,230,255,0.12), rgba(178,84,255,0.1));
-      transform: translateY(-1px);
-    }
-    .chip.active span {
-      color: var(--text-strong);
-      text-shadow: 0 0 10px rgba(55,230,255,0.6);
-    }
-    .profile-card {
-      position: relative;
-      width: var(--card-width);
-      max-width: 640px;
-      aspect-ratio: 2 / 3;
-      border-radius: 32px;
-      padding: 1.5rem;
-      margin: 0 auto;
-      background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-      border: 1px solid rgba(122,215,255,0.3);
-      box-shadow:
-        0 40px 100px rgba(0,0,0,0.7),
-        0 0 35px rgba(178,84,255,0.5),
-        0 0 50px rgba(55,230,255,0.3),
-        inset 0 0 0 1px rgba(255,255,255,0.08);
-      overflow: hidden;
-      transform-style: preserve-3d;
-      transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.6s ease;
-      backdrop-filter: blur(15px) saturate(1.4);
-      cursor: pointer;
-    }
-    .profile-card::before {
-      content: "";
-      position: absolute;
-      inset: -70%;
-      background: conic-gradient(
-        from 45deg,
-        rgba(55,230,255,0.12),
-        rgba(178,84,255,0.15),
-        rgba(255,63,180,0.12),
-        rgba(77,159,255,0.12),
-        rgba(55,230,255,0.12)
-      );
-      filter: blur(90px);
-      opacity: 0.5;
-      animation: spin 38s linear infinite;
-      pointer-events: none;
-    }
-    .profile-card::after {
-      content: "";
-      position: absolute;
-      inset: -70%;
-      background: conic-gradient(
-        from 225deg,
-        rgba(178,84,255,0.15),
-        rgba(55,230,255,0.12),
-        rgba(77,159,255,0.12),
-        rgba(255,63,180,0.12),
-        rgba(178,84,255,0.15)
-      );
-      filter: blur(90px);
-      opacity: 0.4;
-      animation: spin 50s linear infinite reverse;
-      pointer-events: none;
-    }
-    .profile-card:hover {
-      transform: translateY(-8px) rotateX(8deg) rotateY(-8deg) scale(1.02);
-      box-shadow:
-        0 60px 140px rgba(0,0,0,0.8),
-        0 0 45px rgba(55,230,255,0.5),
-        0 0 60px rgba(178,84,255,0.5),
-        0 0 75px rgba(255,63,180,0.3);
-    }
-    .card-inner {
-      position: relative;
-      z-index: 1;
-      height: 100%;
-      display: grid;
-      grid-template-rows: auto auto 1fr auto auto auto;
-      gap: 0.9rem;
-      color: var(--text-strong);
-    }
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-family: 'Orbitron', sans-serif;
-      letter-spacing: 0.08em;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-    .card-top > div:first-child {
-      background: linear-gradient(135deg, #b254ff, #37e6ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-shadow: 0 0 20px rgba(55,230,255,0.6);
-      filter: drop-shadow(0 0 15px rgba(178,84,255,0.5));
-    }
-    .badge {
-      padding: 0.45rem 1rem;
-      border-radius: 14px;
-      border: 1px solid rgba(178,84,255,0.4);
-      background: linear-gradient(145deg, rgba(178,84,255,0.2), rgba(55,230,255,0.1));
-      color: #f4eaff;
-      box-shadow: 0 0 18px rgba(178,84,255,0.4);
-      font-size: 0.85rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-    }
-    .frame {
-      position: relative;
-      border-radius: 20px;
-      height: 58%;
-      min-height: 200px;
-      border: 2px solid rgba(122,215,255,0.4);
-      background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
-      box-shadow: 
-        inset 0 0 0 1px rgba(255,255,255,0.06),
-        0 0 30px rgba(55,230,255,0.3),
-        inset 0 0 40px rgba(178,84,255,0.15);
-      overflow: hidden;
-      animation: pulseGlow 3s ease-in-out infinite;
-    }
-    @keyframes pulseGlow {
-      0%, 100% { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 0 30px rgba(55,230,255,0.3), inset 0 0 40px rgba(178,84,255,0.15); }
-      50% { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 40px rgba(55,230,255,0.5), inset 0 0 50px rgba(178,84,255,0.25); }
-    }
-    .frame img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      filter: saturate(1.1) contrast(1.05);
-    }
-    .frame .placeholder {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-soft);
-      letter-spacing: 0.1em;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 600;
-      background: linear-gradient(135deg, rgba(178,84,255,0.1), rgba(55,230,255,0.08));
-      mix-blend-mode: screen;
-      text-transform: uppercase;
-    }
-    .name {
-      font-family: 'Orbitron', sans-serif;
-      font-size: clamp(1.5rem, 2.5vw, 2rem);
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-align: center;
-      background: linear-gradient(135deg, #ffffff, #b254ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-shadow: 0 0 25px rgba(178,84,255,0.7);
-      filter: drop-shadow(0 0 15px rgba(55,230,255,0.4));
-    }
-    .role {
-      color: var(--text-soft);
-      letter-spacing: 0.08em;
-      font-size: 1rem;
-      margin-top: -6px;
-      text-align: center;
-      font-family: 'Rajdhani', sans-serif;
-      font-weight: 400;
-      text-transform: uppercase;
-    }
-    .chains {
-      display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: 1fr;
-      gap: 0.7rem;
-      margin-top: 0.5rem;
-    }
-    .chain-pill {
-      border: 1px solid rgba(122,215,255,0.4);
-      border-radius: 14px;
-      padding: 0.5rem 0.6rem;
-      text-align: center;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.75rem;
-      letter-spacing: 0.06em;
-      color: #dff6ff;
-      box-shadow: 0 0 18px rgba(55,230,255,0.35);
-      background: linear-gradient(145deg, rgba(55,230,255,0.15), rgba(178,84,255,0.12));
-      font-weight: 600;
-      text-transform: uppercase;
-      min-width: 70px;
-      transition: all 0.2s ease;
-    }
-    .chain-pill:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 25px rgba(55,230,255,0.5);
-    }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.7rem;
-      margin-top: 0.5rem;
-    }
-    .stat {
-      border: 1px solid rgba(178,84,255,0.4);
-      border-radius: 16px;
-      padding: 0.9rem 1rem;
-      background: linear-gradient(145deg, rgba(178,84,255,0.12), rgba(55,230,255,0.1));
-      box-shadow: 0 0 20px rgba(178,84,255,0.4);
-      position: relative;
-      overflow: hidden;
-    }
-    .stat::before {
-      content: "";
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-      animation: shimmer 3s infinite;
-    }
-    @keyframes shimmer {
-      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-    }
-    .stat label {
-      font-size: 0.8rem;
-      color: var(--text-soft);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 600;
-      display: block;
-      position: relative;
-      z-index: 1;
-    }
-    .stat .value {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.2rem;
-      letter-spacing: 0.05em;
-      margin-top: 0.3rem;
-      font-weight: 700;
-      color: var(--text-strong);
-      text-shadow: 0 0 15px rgba(178,84,255,0.6);
-      position: relative;
-      z-index: 1;
-    }
-    footer.card-footer {
-      text-align: center;
-      font-family: 'Orbitron', sans-serif;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #dcd8ff;
-      text-shadow: 0 0 18px rgba(178,84,255,0.6);
-      margin-top: 0.3rem;
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-    .hint {
-      margin-top: 1.5rem;
-      color: var(--text-soft);
-      letter-spacing: 0.04em;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      font-family: 'Rajdhani', sans-serif;
-      font-weight: 500;
-    }
-    .glow-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 999px;
-      background: radial-gradient(circle, var(--glow-cyan), rgba(55,230,255,0));
-      box-shadow: 0 0 15px rgba(55,230,255,0.7);
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.7; transform: scale(1.2); }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Bew3 — Premium Web3 Identity</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#050508;
+  --glass:rgba(255,255,255,0.05);
+  --border:rgba(255,255,255,0.08);
+  --cyan:#37e6ff;
+  --purple:#b254ff;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:'Inter',sans-serif;
+  background: radial-gradient(circle at top, #0a0a1a, #000);
+  color:white;
+  overflow-x:hidden;
+}
+
+/* Layout */
+main{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4vw;
+  padding:6vh 8vw;
+}
+@media(max-width:1000px){
+  main{grid-template-columns:1fr}
+}
+
+/* Panel */
+.panel{
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:2rem;
+  backdrop-filter:blur(30px);
+  box-shadow:0 10px 40px rgba(0,0,0,.7);
+  transition:.3s;
+}
+.panel:hover{
+  transform:translateY(-6px);
+}
+
+/* Heading */
+h1{
+  font-family:'Space Grotesk';
+  font-size:2.5rem;
+  margin-bottom:.5rem;
+  background:linear-gradient(90deg,#fff,var(--purple),var(--cyan));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.sub{
+  color:#aaa;
+  margin-bottom:2rem;
+}
+
+/* Floating Input */
+.field{position:relative;margin-bottom:1.2rem}
+.field input{
+  width:100%;
+  padding:1rem;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,0.02);
+  color:white;
+  outline:none;
+}
+.field label{
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#777;
+  transition:.2s;
+}
+.field input:focus+label,
+.field input:not(:placeholder-shown)+label{
+  top:-8px;
+  font-size:.7rem;
+  color:var(--cyan);
+  background:black;
+  padding:0 6px;
+}
+
+/* Button */
+button{
+  width:100%;
+  padding:1rem;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,var(--purple),var(--cyan));
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+  transition:.3s;
+}
+button:hover{
+  transform:translateY(-2px);
+}
+
+/* Card */
+.profile-card{
+  position:relative;
+  border-radius:24px;
+  padding:1.5rem;
+  background:var(--glass);
+  border:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  box-shadow:0 20px 80px rgba(0,0,0,.8);
+  transition:.4s;
+}
+.profile-card:hover{
+  transform:translateY(-10px) scale(1.02);
+}
+
+/* Glow border */
+.profile-card::after{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:inherit;
+  background:linear-gradient(270deg,#b254ff,#37e6ff,#ff3fb4,#4d9fff);
+  z-index:-1;
+  filter:blur(12px);
+  animation:spin 6s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Avatar */
+.frame{
+  height:250px;
+  border-radius:16px;
+  overflow:hidden;
+  margin-bottom:1rem;
+}
+.frame img{width:100%;height:100%;object-fit:cover}
+
+/* Text */
+.name{
+  font-family:'Space Grotesk';
+  font-size:1.6rem;
+  text-align:center;
+}
+.role{
+  text-align:center;
+  color:#aaa;
+  margin-bottom:1rem;
+}
+
+/* Stats */
+.stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.8rem;
+}
+.stat{
+  padding:.8rem;
+  border-radius:12px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+}
+</style>
 </head>
+
 <body>
-  <canvas id="bg"></canvas>
-  <main>
-    <section class="panel">
-      <div class="panel-content">
-        <h1>Web3 Identity</h1>
-        <p class="sub">Create your holographic blockchain profile card. Real-time preview as you build.</p>
-        <form id="profileForm">
-          <div class="field">
-            <label for="name">Name</label>
-            <input id="name" name="name" placeholder="Astra Nova" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label for="role">Title / Role</label>
-            <input id="role" name="role" placeholder="Protocol Architect" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label for="joined">Joined Year</label>
-            <input id="joined" name="joined" type="number" min="2008" max="2099" placeholder="2026" />
-          </div>
-          <div class="field">
-            <label for="earnings">Earnings (USD)</label>
-            <input id="earnings" name="earnings" type="number" min="0" step="100" placeholder="42000" />
-          </div>
-          <div class="field">
-            <label for="deposits">Deposits (USD)</label>
-            <input id="deposits" name="deposits" type="number" min="0" step="100" placeholder="18000" />
-          </div>
-          <div class="field">
-            <label>Supported Chains</label>
-            <div class="chipset" id="chains">
-              <label class="chip active"><input type="checkbox" value="ETH" checked /><span>Ethereum</span></label>
-              <label class="chip active"><input type="checkbox" value="SOL" checked /><span>Solana</span></label>
-              <label class="chip active"><input type="checkbox" value="POLY" checked /><span>Polygon</span></label>
-              <label class="chip active"><input type="checkbox" value="BTC" checked /><span>Bitcoin</span></label>
-              <label class="chip"><input type="checkbox" value="L1" /><span>Layer 1</span></label>
-              <label class="chip"><input type="checkbox" value="L2" /><span>Layer 2</span></label>
-              <label class="chip"><input type="checkbox" value="DA" /><span>Data Availability</span></label>
-            </div>
-          </div>
-          <div class="field">
-            <label for="avatar">Upload Image</label>
-            <input id="avatar" name="avatar" type="file" accept="image/*" />
-          </div>
-        </form>
-        <div class="hint">
-          <span class="glow-dot"></span>
-          Card responds to cursor movement. Optimized for Full HD / 4K displays.
-        </div>
-      </div>
-    </section>
-    <section class="panel" style="overflow: visible;">
-      <div class="panel-content" style="display: flex; justify-content: center;">
-        <div class="profile-card" id="profileCard">
-          <div class="card-inner">
-            <div class="card-top">
-              <div>Supported by Bew3</div>
-              <div class="badge" id="badgeYear">Joined: —</div>
-            </div>
-            <div class="frame">
-              <img id="avatarPreview" style="display:none;" alt="Avatar Preview" />
-              <div class="placeholder" id="avatarPlaceholder">Upload Image</div>
-            </div>
-            <div>
-              <div class="name" id="displayName">Your Name</div>
-              <div class="role" id="displayRole">Title / Role</div>
-            </div>
-            <div class="chains" id="chainList">
-              <div class="chain-pill">ETH</div>
-              <div class="chain-pill">SOL</div>
-              <div class="chain-pill">POLY</div>
-              <div class="chain-pill">BTC</div>
-            </div>
-            <div class="stats">
-              <div class="stat">
-                <label>Earnings</label>
-                <div class="value" id="displayEarnings">$0</div>
-              </div>
-              <div class="stat">
-                <label>Deposits</label>
-                <div class="value" id="displayDeposits">$0</div>
-              </div>
-            </div>
-            <footer class="card-footer">Bew3</footer>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-  <script>
-    // Live updates
-    const nameInput = document.getElementById('name');
-    const roleInput = document.getElementById('role');
-    const yearInput = document.getElementById('joined');
-    const earningsInput = document.getElementById('earnings');
-    const depositsInput = document.getElementById('deposits');
-    const avatarInput = document.getElementById('avatar');
-    const chainContainer = document.getElementById('chains');
 
-    const displayName = document.getElementById('displayName');
-    const displayRole = document.getElementById('displayRole');
-    const badgeYear = document.getElementById('badgeYear');
-    const chainList = document.getElementById('chainList');
-    const displayEarnings = document.getElementById('displayEarnings');
-    const displayDeposits = document.getElementById('displayDeposits');
-    const avatarPreview = document.getElementById('avatarPreview');
-    const avatarPlaceholder = document.getElementById('avatarPlaceholder');
-    const card = document.getElementById('profileCard');
+<main>
 
-    const currency = value => value ? "$" + Number(value).toLocaleString() : "$0";
+<!-- FORM -->
+<section class="panel">
+<h1>Web3 Identity</h1>
+<p class="sub">Build your premium blockchain identity</p>
 
-    nameInput.addEventListener('input', () => {
-      displayName.textContent = nameInput.value.trim() || "Your Name";
-    });
-    roleInput.addEventListener('input', () => {
-      displayRole.textContent = roleInput.value.trim() || "Title / Role";
-    });
-    yearInput.addEventListener('input', () => {
-      const yr = yearInput.value.trim();
-      badgeYear.textContent = yr ? "Joined: " + yr : "Joined: —";
-    });
-    earningsInput.addEventListener('input', () => {
-      displayEarnings.textContent = currency(earningsInput.value);
-    });
-    depositsInput.addEventListener('input', () => {
-      displayDeposits.textContent = currency(depositsInput.value);
-    });
-    avatarInput.addEventListener('change', (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        avatarPreview.src = reader.result;
-        avatarPreview.style.display = 'block';
-        avatarPlaceholder.style.display = 'none';
-      };
-      reader.readAsDataURL(file);
-    });
-    chainContainer.querySelectorAll('.chip').forEach(chip => {
-      chip.addEventListener('click', (e) => {
-        const input = chip.querySelector('input');
-        input.checked = !input.checked;
-        chip.classList.toggle('active', input.checked);
-        updateChains();
-        e.preventDefault();
-      });
-    });
-    function updateChains() {
-      const selected = [...chainContainer.querySelectorAll('input:checked')].map(i => i.value);
-      chainList.innerHTML = selected.map(v => {
-        const labels = { ETH: 'ETH', SOL: 'SOL', POLY: 'POLY', BTC: 'BTC', L1: 'L1', L2: 'L2', DA: 'DA' };
-        return `<div class="chain-pill">${labels[v] || v}</div>`;
-      }).join('');
-      if (selected.length === 0) {
-        chainList.innerHTML = `<div class="chain-pill">WEB3</div>`;
-      }
-    }
-    updateChains();
+<form id="form">
 
-    // Enhanced card tilt & parallax
-    let targetRotX = 0, targetRotY = 0;
-    let currentRotX = 0, currentRotY = 0;
-    const damp = 0.15;
+<div class="field">
+<input id="name" placeholder=" " />
+<label>Name</label>
+</div>
 
-    document.addEventListener('pointermove', (e) => {
-      const { innerWidth, innerHeight } = window;
-      const x = (e.clientX / innerWidth - 0.5) * 2;
-      const y = (e.clientY / innerHeight - 0.5) * 2;
-      targetRotX = -y * 12;
-      targetRotY = x * 12;
-    });
+<div class="field">
+<input id="role" placeholder=" " />
+<label>Role</label>
+</div>
 
-    function animateCard() {
-      currentRotX += (targetRotX - currentRotX) * damp;
-      currentRotY += (targetRotY - currentRotY) * damp;
-      card.style.transform = `perspective(1400px) rotateX(${currentRotX}deg) rotateY(${currentRotY}deg) translateZ(30px)`;
-      requestAnimationFrame(animateCard);
-    }
-    animateCard();
+<div class="field">
+<input id="year" type="number" placeholder=" " />
+<label>Joined Year</label>
+</div>
 
-    document.addEventListener('pointerleave', () => {
-      targetRotX = 0;
-      targetRotY = 0;
-    });
+<div class="field">
+<input id="earn" type="number" placeholder=" " />
+<label>Earnings</label>
+</div>
 
-    // Enhanced WebGL background with 3D cubes, hexagons, and particles
-    const canvas = document.getElementById('bg');
-    const ctx = canvas.getContext('2d');
-    let w, h, nodes, cubes, hexagons, particles;
+<div class="field">
+<input id="dep" type="number" placeholder=" " />
+<label>Deposits</label>
+</div>
 
-    const nodeCount = 140;
-    const cubeCount = 8;
-    const hexCount = 12;
-    const particleCount = 60;
+<div class="field">
+<input id="img" type="file" />
+</div>
 
-    function resize() {
-      w = canvas.width = window.innerWidth;
-      h = canvas.height = window.innerHeight;
-      
-      nodes = new Array(nodeCount).fill(0).map(() => ({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        z: Math.random() * 1 + 0.3,
-        vx: (Math.random() - 0.5) * 0.25,
-        vy: (Math.random() - 0.5) * 0.25
-      }));
+<button type="button">Generate Identity</button>
 
-      cubes = new Array(cubeCount).fill(0).map(() => ({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        z: Math.random() * 400 + 200,
-        size: Math.random() * 40 + 20,
-        rotX: Math.random() * Math.PI * 2,
-        rotY: Math.random() * Math.PI * 2,
-        rotZ: Math.random() * Math.PI * 2,
-        vRotX: (Math.random() - 0.5) * 0.01,
-        vRotY: (Math.random() - 0.5) * 0.01,
-        vRotZ: (Math.random() - 0.5) * 0.01
-      }));
+</form>
+</section>
 
-      hexagons = new Array(hexCount).fill(0).map(() => ({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        z: Math.random() * 300 + 150,
-        size: Math.random() * 50 + 30,
-        rot: Math.random() * Math.PI * 2,
-        vRot: (Math.random() - 0.5) * 0.008
-      }));
+<!-- CARD -->
+<section class="panel">
+<div class="profile-card">
 
-      particles = new Array(particleCount).fill(0).map(() => ({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        z: Math.random() * 500,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        vz: (Math.random() - 0.5) * 0.3,
-        size: Math.random() * 3 + 1
-      }));
-    }
+<div class="frame">
+<img id="preview" />
+</div>
 
-    window.addEventListener('resize', resize);
-    resize();
+<div class="name" id="dname">Your Name</div>
+<div class="role" id="drole">Your Role</div>
 
-    function project3D(x, y, z) {
-      const scale = 800 / (800 + z);
-      return {
-        x: x * scale + w / 2,
-        y: y * scale + h / 2,
-        scale: scale
-      };
-    }
+<div class="stats">
+<div class="stat"><b>Earnings</b><div id="dearn">$0</div></div>
+<div class="stat"><b>Deposits</b><div id="ddep">$0</div></div>
+</div>
 
-    function drawCube(cube) {
-      const s = cube.size;
-      const vertices = [
-        [-s, -s, -s], [s, -s, -s], [s, s, -s], [-s, s, -s],
-        [-s, -s, s], [s, -s, s], [s, s, s], [-s, s, s]
-      ];
+</div>
+</section>
 
-      const rotated = vertices.map(([x, y, z]) => {
-        let nx = x, ny = y, nz = z;
-        [nx, ny] = [nx * Math.cos(cube.rotY) - nz * Math.sin(cube.rotY), ny, nx * Math.sin(cube.rotY) + nz * Math.cos(cube.rotY)];
-        [nx, ny] = [nx, ny * Math.cos(cube.rotX) - nz * Math.sin(cube.rotX), ny * Math.sin(cube.rotX) + nz * Math.cos(cube.rotX)];
-        return project3D(cube.x + nx - w/2, cube.y + ny - h/2, cube.z + nz);
-      });
+</main>
 
-      const edges = [
-        [0,1], [1,2], [2,3], [3,0],
-        [4,5], [5,6], [6,7], [7,4],
-        [0,4], [1,5], [2,6], [3,7]
-      ];
+<script>
+const nameI=document.getElementById('name')
+const roleI=document.getElementById('role')
+const earnI=document.getElementById('earn')
+const depI=document.getElementById('dep')
+const imgI=document.getElementById('img')
 
-      ctx.strokeStyle = `rgba(178,84,255,${0.4 * (cube.z / 600)})`;
-      ctx.lineWidth = 1.5;
-      edges.forEach(([a, b]) => {
-        const v1 = rotated[a];
-        const v2 = rotated[b];
-        ctx.beginPath();
-        ctx.moveTo(v1.x, v1.y);
-        ctx.lineTo(v2.x, v2.y);
-        ctx.stroke();
-      });
-    }
+nameI.oninput=()=>dname.textContent=nameI.value||"Your Name"
+roleI.oninput=()=>drole.textContent=roleI.value||"Your Role"
+earnI.oninput=()=>dearn.textContent="$"+(earnI.value||0)
+depI.oninput=()=>ddep.textContent="$"+(depI.value||0)
 
-    function drawHexagon(hex) {
-      const proj = project3D(hex.x - w/2, hex.y - h/2, hex.z);
-      const size = hex.size * proj.scale;
-      const points = [];
-      for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i + hex.rot;
-        points.push({
-          x: proj.x + Math.cos(angle) * size,
-          y: proj.y + Math.sin(angle) * size
-        });
-      }
-      ctx.strokeStyle = `rgba(55,230,255,${0.3 * (hex.z / 450)})`;
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < 6; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
-      }
-      ctx.closePath();
-      ctx.stroke();
-    }
+imgI.onchange=e=>{
+const file=e.target.files[0]
+if(!file)return
+const r=new FileReader()
+r.onload=()=>preview.src=r.result
+r.readAsDataURL(file)
+}
+</script>
 
-    function draw() {
-      ctx.clearRect(0, 0, w, h);
-      
-      const gradient = ctx.createLinearGradient(0, 0, w, h);
-      gradient.addColorStop(0, 'rgba(10,10,26,0.6)');
-      gradient.addColorStop(1, 'rgba(0,0,0,0.8)');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, w, h);
-
-      // Update and draw particles
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.z += p.vz;
-        if (p.x < 0 || p.x > w) p.vx *= -1;
-        if (p.y < 0 || p.y > h) p.vy *= -1;
-        if (p.z < 0 || p.z > 500) p.vz *= -1;
-        const proj = project3D(p.x - w/2, p.y - h/2, p.z);
-        const size = p.size * proj.scale;
-        const glow = ctx.createRadialGradient(proj.x, proj.y, 0, proj.x, proj.y, size * 4);
-        glow.addColorStop(0, `rgba(77,159,255,${0.6 * (p.z / 500)})`);
-        glow.addColorStop(1, 'rgba(77,159,255,0)');
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(proj.x, proj.y, size * 4, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Update and draw cubes
-      cubes.forEach(cube => {
-        cube.rotX += cube.vRotX;
-        cube.rotY += cube.vRotY;
-        cube.rotZ += cube.vRotZ;
-        drawCube(cube);
-      });
-
-      // Update and draw hexagons
-      hexagons.forEach(hex => {
-        hex.rot += hex.vRot;
-        drawHexagon(hex);
-      });
-
-      // Draw node network
-      for (let i = 0; i < nodes.length; i++) {
-        const a = nodes[i];
-        a.x += a.vx;
-        a.y += a.vy;
-        if (a.x < 0 || a.x > w) a.vx *= -1;
-        if (a.y < 0 || a.y > h) a.vy *= -1;
-        
-        for (let j = i + 1; j < nodes.length; j++) {
-          const b = nodes[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
-          const dist2 = dx * dx + dy * dy;
-          if (dist2 < 140 * 140) {
-            const alpha = (1 - dist2 / (140 * 140)) * 0.4;
-            ctx.strokeStyle = `rgba(122,215,255,${alpha})`;
-            ctx.lineWidth = 0.9 * ((a.z + b.z) / 2);
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-          }
-        }
-        
-        const size = 2.6 * a.z + 0.8;
-        const glow = ctx.createRadialGradient(a.x, a.y, 0, a.x, a.y, size * 7);
-        glow.addColorStop(0, 'rgba(55,230,255,0.95)');
-        glow.addColorStop(0.5, 'rgba(178,84,255,0.4)');
-        glow.addColorStop(1, 'rgba(55,230,255,0)');
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, size * 7, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#7ad7ff';
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      requestAnimationFrame(draw);
-    }
-    draw();
-  </script>
 </body>
 </html>
